@@ -1,4 +1,5 @@
 # diagnose-my-browser
+Purpose: To quickly verify user agents of various devices that don't give you a quick way to view the dev console.
 
 ## Project setup
 ```

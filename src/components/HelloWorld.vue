@@ -1,152 +1,74 @@
 <template>
   <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br />
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener"
-        >vue-cli documentation</a
-      >.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel"
-          target="_blank"
-          rel="noopener"
-          >babel</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-typescript"
-          target="_blank"
-          rel="noopener"
-          >typescript</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-pwa"
-          target="_blank"
-          rel="noopener"
-          >pwa</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-router"
-          target="_blank"
-          rel="noopener"
-          >router</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-vuex"
-          target="_blank"
-          rel="noopener"
-          >vuex</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint"
-          target="_blank"
-          rel="noopener"
-          >eslint</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-unit-jest"
-          target="_blank"
-          rel="noopener"
-          >unit-jest</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-e2e-cypress"
-          target="_blank"
-          rel="noopener"
-          >e2e-cypress</a
-        >
-      </li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li>
-        <a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a>
-      </li>
-      <li>
-        <a href="https://forum.vuejs.org" target="_blank" rel="noopener"
-          >Forum</a
-        >
-      </li>
-      <li>
-        <a href="https://chat.vuejs.org" target="_blank" rel="noopener"
-          >Community Chat</a
-        >
-      </li>
-      <li>
-        <a href="https://twitter.com/vuejs" target="_blank" rel="noopener"
-          >Twitter</a
-        >
-      </li>
-      <li>
-        <a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a>
-      </li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li>
-        <a href="https://router.vuejs.org" target="_blank" rel="noopener"
-          >vue-router</a
-        >
-      </li>
-      <li>
-        <a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a>
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-devtools#vue-devtools"
-          target="_blank"
-          rel="noopener"
-          >vue-devtools</a
-        >
-      </li>
-      <li>
-        <a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener"
-          >vue-loader</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/awesome-vue"
-          target="_blank"
-          rel="noopener"
-          >awesome-vue</a
-        >
-      </li>
-    </ul>
+    <h1>Diagnose My Browser</h1>
+    <div v-if="error">
+      <h2>Error!!</h2>
+      <pre><code>{{ error }}</code></pre>
+    </div>
+    <h3>Current $route</h3>
+    <div>
+      <pre><code>{{ routeResult }}</code></pre>
+    </div>
+    <h3>Navigator Results</h3>
+    <div>
+      <pre><code>{{ navigatorResult }}</code></pre>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
+import { Route } from "vue-router";
 
 export default Vue.extend({
   name: "HelloWorld",
-  props: {
-    msg: String
+  data() {
+    let err = null;
+    const nav: { [key: string]: unknown } = {};
+    const route: { [key: string]: unknown } = {};
+
+    try {
+      for (const prop in window.navigator) {
+        const val = window.navigator[prop as keyof Navigator];
+        nav[prop] = val;
+      }
+
+      nav.plugins = [...window.navigator.plugins].map(pl => pl.name);
+      nav.mimeTypes = [...window.navigator.mimeTypes].map(
+        pl => `${pl.type}: ${pl.description}`
+      );
+
+      for (const prop in this.$route) {
+        if (prop !== "matched") {
+          route[prop] = this.$route[prop as keyof Route];
+        }
+      }
+    } catch (e) {
+      err = e;
+    }
+
+    return {
+      error:
+        err &&
+        JSON.stringify(
+          {
+            message: err.message,
+            stack: err.stack
+          },
+          null,
+          2
+        ),
+      navigatorResult: JSON.stringify(nav, null, 2),
+      routeResult: JSON.stringify(route, null, 2)
+    };
   }
 });
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="stylus">
+.hello
+  margin: 0 30px;
 h3
   margin 40px 0 0
 
@@ -160,4 +82,16 @@ li
 
 a
   color #42b983
+pre
+  padding: 12px
+  white-space: pre-wrap
+  text-align: left
+  border-radius: 5px
+  margin: 1em 0
+  background-color: #333
+  color: #eee
+  font-family: Courier, 'New Courier', monospace
+
+code
+  font-size: 16px
 </style>
